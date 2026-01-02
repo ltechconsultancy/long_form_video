@@ -9,21 +9,48 @@ import uuid
 from app.database import get_db
 from app.models import Project, Scene
 from app.auth import get_current_user
+from app.services.fal_service import IMAGE_MODELS, VIDEO_MODELS, IMAGE_SIZES
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
 UPLOADS_PATH = os.getenv("UPLOADS_PATH", "/app/uploads")
 
 
+@router.get("/models")
+async def get_models(request: Request):
+    """Return available models for frontend."""
+    user = get_current_user(request)
+    if not user:
+        return {"error": "Not authenticated"}
+
+    return {
+        "image_models": IMAGE_MODELS,
+        "video_models": VIDEO_MODELS,
+        "image_sizes": IMAGE_SIZES,
+    }
+
+
 @router.post("/projects", response_class=HTMLResponse)
 async def create_project(
-    request: Request, name: str = Form(...), db: Session = Depends(get_db)
+    request: Request,
+    name: str = Form(...),
+    image_model: str = Form("fal-ai/flux/schnell"),
+    video_model: str = Form("fal-ai/ovi/image-to-video"),
+    image_size: str = Form("landscape_16_9"),
+    video_duration: int = Form(5),
+    db: Session = Depends(get_db),
 ):
     user = get_current_user(request)
     if not user:
         return HTMLResponse('<div class="error">Not authenticated</div>', status_code=401)
 
-    project = Project(name=name)
+    project = Project(
+        name=name,
+        image_model=image_model,
+        video_model=video_model,
+        image_size=image_size,
+        video_duration=video_duration,
+    )
     db.add(project)
     db.commit()
     db.refresh(project)
@@ -31,6 +58,33 @@ async def create_project(
     return templates.TemplateResponse(
         "partials/project_card.html", {"request": request, "project": project}
     )
+
+
+@router.put("/projects/{project_id}/settings", response_class=HTMLResponse)
+async def update_project_settings(
+    request: Request,
+    project_id: int,
+    image_model: str = Form(...),
+    video_model: str = Form(...),
+    image_size: str = Form(...),
+    video_duration: int = Form(...),
+    db: Session = Depends(get_db),
+):
+    user = get_current_user(request)
+    if not user:
+        return HTMLResponse("", status_code=401)
+
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        return HTMLResponse('<div class="error">Project not found</div>', status_code=404)
+
+    project.image_model = image_model
+    project.video_model = video_model
+    project.image_size = image_size
+    project.video_duration = video_duration
+    db.commit()
+
+    return HTMLResponse('<div class="success">Settings saved!</div>')
 
 
 @router.delete("/projects/{project_id}", response_class=HTMLResponse)
@@ -131,7 +185,6 @@ async def generate_video(
     if not project:
         return {"error": "Project not found"}
 
-    # TODO: Queue video generation task with Celery
     from app.tasks.video import generate_project_video
 
     task = generate_project_video.delay(project_id)

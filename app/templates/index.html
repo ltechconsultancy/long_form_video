@@ -3,24 +3,72 @@
 {% block title %}Projects - Long Form Video{% endblock %}
 
 {% block content %}
-<div x-data="{ showNewProject: false }">
+<div x-data="{ showNewProject: false, showAdvanced: false }">
     <h1>Your Projects</h1>
 
     <button class="btn-primary" @click="showNewProject = true">New Project</button>
 
     <div class="modal" x-show="showNewProject" x-cloak>
-        <div class="modal-content">
+        <div class="modal-content modal-large">
             <h2>Create New Project</h2>
             <form
                 hx-post="/api/projects"
                 hx-target="#projects-list"
                 hx-swap="afterbegin"
-                @htmx:after-request="showNewProject = false"
+                @htmx:after-request="showNewProject = false; showAdvanced = false"
             >
                 <div class="form-group">
                     <label for="name">Project name</label>
                     <input type="text" id="name" name="name" placeholder="My Video Project" required>
                 </div>
+
+                <button type="button" class="btn-link" @click="showAdvanced = !showAdvanced">
+                    <span x-show="!showAdvanced">▶ Show model settings</span>
+                    <span x-show="showAdvanced">▼ Hide model settings</span>
+                </button>
+
+                <div x-show="showAdvanced" x-cloak class="settings-section">
+                    <div class="form-group">
+                        <label for="image_model">Image Model</label>
+                        <select id="image_model" name="image_model">
+                            <option value="fal-ai/flux/schnell">Flux Schnell - $0.003/MP (Fast)</option>
+                            <option value="fal-ai/flux/dev">Flux Dev - $0.05/MP (Better quality)</option>
+                            <option value="fal-ai/fast-sdxl">SDXL Fast - $0.01/MP (Fast)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="video_model">Video Model</label>
+                        <select id="video_model" name="video_model">
+                            <option value="fal-ai/ovi/image-to-video">Ovi - $0.20 (Fast, cheap)</option>
+                            <option value="fal-ai/minimax-video/image-to-video">MiniMax - $0.35 (Medium)</option>
+                            <option value="fal-ai/kling-video/v1/standard/image-to-video">Kling 1.0 - $0.50 (Better quality)</option>
+                            <option value="fal-ai/kling-video/v1.5/pro/image-to-video">Kling 1.5 Pro - $0.80 (Best quality)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="image_size">Image Size</label>
+                            <select id="image_size" name="image_size">
+                                <option value="landscape_16_9">16:9 Landscape</option>
+                                <option value="landscape_4_3">4:3 Landscape</option>
+                                <option value="square">1:1 Square</option>
+                                <option value="portrait_4_3">4:3 Portrait</option>
+                                <option value="portrait_16_9">16:9 Portrait</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="video_duration">Scene Duration</label>
+                            <select id="video_duration" name="video_duration">
+                                <option value="5">5 seconds</option>
+                                <option value="10">10 seconds</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-actions">
                     <button type="submit" class="btn-primary">Create</button>
                     <button type="button" class="btn-secondary" @click="showNewProject = false">Cancel</button>

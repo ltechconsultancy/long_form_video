@@ -31,7 +31,6 @@ def generate_project_video(self, project_id: int):
     3. Stitching all clips + audio into final video (via FFmpeg)
     """
     db = SessionLocal()
-    fal_service = FalService()
     video_service = VideoService(str(UPLOADS_PATH))
 
     try:
@@ -51,6 +50,12 @@ def generate_project_video(self, project_id: int):
             project.status = "failed"
             db.commit()
             return {"status": "failed", "error": "No scenes in project"}
+
+        # Initialize FalService with project's model settings
+        fal_service = FalService(
+            image_model=project.image_model,
+            video_model=project.video_model,
+        )
 
         project.status = "generating"
         db.commit()
@@ -73,13 +78,16 @@ def generate_project_video(self, project_id: int):
                 import fal_client
                 image_url = fal_client.upload_file(scene.reference_image_path)
             else:
-                # Generate image from prompt
+                # Generate image from prompt using project's image_size setting
                 self.update_state(
                     state="PROCESSING",
                     meta={"step": f"generating_image_{i+1}", "progress": progress}
                 )
                 try:
-                    image_url = fal_service.generate_image(scene.prompt)
+                    image_url = fal_service.generate_image(
+                        scene.prompt,
+                        image_size=project.image_size,
+                    )
                     scene.generated_image_url = image_url
                     db.commit()
                 except Exception as e:
@@ -87,7 +95,7 @@ def generate_project_video(self, project_id: int):
                     db.commit()
                     return {"status": "failed", "error": f"Image generation failed for scene {i+1}: {str(e)}"}
 
-            # Step 2: Generate video from image
+            # Step 2: Generate video from image using project's duration setting
             self.update_state(
                 state="PROCESSING",
                 meta={"step": f"generating_video_{i+1}", "progress": progress + 10}
@@ -96,7 +104,7 @@ def generate_project_video(self, project_id: int):
                 video_url = fal_service.generate_video_from_image(
                     image_url=image_url,
                     prompt=scene.prompt,
-                    duration=5,  # 5 seconds per scene
+                    duration=project.video_duration,
                 )
                 scene.generated_video_url = video_url
                 db.commit()

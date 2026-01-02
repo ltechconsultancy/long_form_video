@@ -3,7 +3,7 @@
 {% block title %}{{ project.name }} - Long Form Video{% endblock %}
 
 {% block content %}
-<div x-data="{ showNewScene: false, generating: false }">
+<div x-data="{ showNewScene: false, showSettings: false, generating: false }">
     <div class="project-header">
         <a href="/" class="back-link">&larr; Back to Projects</a>
         <h1>{{ project.name }}</h1>
@@ -12,6 +12,7 @@
 
     <div class="project-actions">
         <button class="btn-primary" @click="showNewScene = true">Add Scene</button>
+        <button class="btn-secondary" @click="showSettings = true">Settings</button>
         <button
             class="btn-success"
             hx-post="/api/projects/{{ project.id }}/generate"
@@ -24,6 +25,75 @@
         </button>
     </div>
 
+    <!-- Current Settings Display -->
+    <div class="settings-display">
+        <span class="setting-tag" title="Image Model">📷 {{ project.image_model.split('/')[-1] }}</span>
+        <span class="setting-tag" title="Video Model">🎬 {{ project.video_model.split('/')[-1] }}</span>
+        <span class="setting-tag" title="Image Size">📐 {{ project.image_size }}</span>
+        <span class="setting-tag" title="Duration">⏱️ {{ project.video_duration }}s</span>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" x-show="showSettings" x-cloak>
+        <div class="modal-content modal-large">
+            <h2>Project Settings</h2>
+            <form
+                hx-put="/api/projects/{{ project.id }}/settings"
+                hx-target="#settings-result"
+                hx-swap="innerHTML"
+                @htmx:after-request="setTimeout(() => showSettings = false, 1000)"
+            >
+                <div class="form-group">
+                    <label for="settings_image_model">Image Model</label>
+                    <select id="settings_image_model" name="image_model">
+                        <option value="fal-ai/flux/schnell" {% if project.image_model == 'fal-ai/flux/schnell' %}selected{% endif %}>Flux Schnell - $0.003/MP (Fast)</option>
+                        <option value="fal-ai/flux/dev" {% if project.image_model == 'fal-ai/flux/dev' %}selected{% endif %}>Flux Dev - $0.05/MP (Better quality)</option>
+                        <option value="fal-ai/fast-sdxl" {% if project.image_model == 'fal-ai/fast-sdxl' %}selected{% endif %}>SDXL Fast - $0.01/MP (Fast)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="settings_video_model">Video Model</label>
+                    <select id="settings_video_model" name="video_model">
+                        <option value="fal-ai/ovi/image-to-video" {% if project.video_model == 'fal-ai/ovi/image-to-video' %}selected{% endif %}>Ovi - $0.20 (Fast, cheap)</option>
+                        <option value="fal-ai/minimax-video/image-to-video" {% if project.video_model == 'fal-ai/minimax-video/image-to-video' %}selected{% endif %}>MiniMax - $0.35 (Medium)</option>
+                        <option value="fal-ai/kling-video/v1/standard/image-to-video" {% if project.video_model == 'fal-ai/kling-video/v1/standard/image-to-video' %}selected{% endif %}>Kling 1.0 - $0.50 (Better quality)</option>
+                        <option value="fal-ai/kling-video/v1.5/pro/image-to-video" {% if project.video_model == 'fal-ai/kling-video/v1.5/pro/image-to-video' %}selected{% endif %}>Kling 1.5 Pro - $0.80 (Best quality)</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="settings_image_size">Image Size</label>
+                        <select id="settings_image_size" name="image_size">
+                            <option value="landscape_16_9" {% if project.image_size == 'landscape_16_9' %}selected{% endif %}>16:9 Landscape</option>
+                            <option value="landscape_4_3" {% if project.image_size == 'landscape_4_3' %}selected{% endif %}>4:3 Landscape</option>
+                            <option value="square" {% if project.image_size == 'square' %}selected{% endif %}>1:1 Square</option>
+                            <option value="portrait_4_3" {% if project.image_size == 'portrait_4_3' %}selected{% endif %}>4:3 Portrait</option>
+                            <option value="portrait_16_9" {% if project.image_size == 'portrait_16_9' %}selected{% endif %}>16:9 Portrait</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="settings_video_duration">Scene Duration</label>
+                        <select id="settings_video_duration" name="video_duration">
+                            <option value="5" {% if project.video_duration == 5 %}selected{% endif %}>5 seconds</option>
+                            <option value="10" {% if project.video_duration == 10 %}selected{% endif %}>10 seconds</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="settings-result"></div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Settings</button>
+                    <button type="button" class="btn-secondary" @click="showSettings = false">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Scene Modal -->
     <div class="modal" x-show="showNewScene" x-cloak>
         <div class="modal-content">
             <h2>Add New Scene</h2>

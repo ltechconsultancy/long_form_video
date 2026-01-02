@@ -22,6 +22,12 @@ class Project(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    # Model settings
+    image_model = Column(String(100), default="fal-ai/flux/schnell")
+    video_model = Column(String(100), default="fal-ai/ovi/image-to-video")
+    image_size = Column(String(50), default="landscape_16_9")
+    video_duration = Column(Integer, default=5)  # seconds per scene
+
     scenes = relationship("Scene", back_populates="project", cascade="all, delete-orphan")
     output_video_path = Column(String(500), nullable=True)
 
