@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Project - Long Form Video{% endblock %}
+
+{% block content %}
+<div x-data="{ showNewScene: false }">
+    <h1>Project #{{ project_id }}</h1>
+
+    <section id="scenes">
+        <h2>Scenes</h2>
+        <button @click="showNewScene = true">Add Scene</button>
+
+        <div x-show="showNewScene" x-cloak>
+            <form hx-post="/api/projects/{{ project_id }}/scenes"
+                  hx-swap="beforeend"
+                  hx-target="#scenes-list"
+                  hx-encoding="multipart/form-data">
+                <div>
+                    <label>Prompt / Script</label>
+                    <textarea name="prompt" rows="3" required></textarea>
+                </div>
+                <div>
+                    <label>Reference Image (optional)</label>
+                    <input type="file" name="reference_image" accept="image/*">
+                </div>
+                <div>
+                    <label>Audio (optional)</label>
+                    <input type="file" name="audio" accept="audio/*">
+                </div>
+                <button type="submit">Add Scene</button>
+                <button type="button" @click="showNewScene = false">Cancel</button>
+            </form>
+        </div>
+
+        <div id="scenes-list">
+            <!-- Scenes will be loaded here -->
+        </div>
+    </section>
+
+    <section id="generate">
+        <h2>Generate Video</h2>
+        <button hx-post="/api/projects/{{ project_id }}/generate"
+                hx-swap="innerHTML"
+                hx-target="#generation-status">
+            Generate Full Video
+        </button>
+        <div id="generation-status"></div>
+    </section>
+</div>
+{% endblock %}
