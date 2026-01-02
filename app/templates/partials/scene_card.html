@@ -1,0 +1,18 @@
+<div class="scene-card" id="scene-{{ scene.id }}">
+    <div class="scene-order">#{{ scene.order + 1 }}</div>
+    <div class="scene-content">
+        <p class="scene-prompt">{{ scene.prompt }}</p>
+        {% if scene.reference_image_path %}
+        <span class="badge">Has reference image</span>
+        {% endif %}
+        {% if scene.audio_path %}
+        <span class="badge">Has audio</span>
+        {% endif %}
+    </div>
+    <button
+        class="btn-delete"
+        hx-delete="/api/scenes/{{ scene.id }}"
+        hx-target="#scene-{{ scene.id }}"
+        hx-swap="outerHTML"
+    >Delete</button>
+</div>

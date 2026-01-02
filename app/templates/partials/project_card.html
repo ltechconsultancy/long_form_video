@@ -1,0 +1,13 @@
+<div class="project-card" id="project-{{ project.id }}">
+    <a href="/projects/{{ project.id }}">
+        <h3>{{ project.name }}</h3>
+        <span class="status status-{{ project.status }}">{{ project.status }}</span>
+    </a>
+    <button
+        class="btn-delete"
+        hx-delete="/api/projects/{{ project.id }}"
+        hx-target="#project-{{ project.id }}"
+        hx-swap="outerHTML"
+        hx-confirm="Delete project '{{ project.name }}'?"
+    >Delete</button>
+</div>

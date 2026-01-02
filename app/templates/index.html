@@ -6,18 +6,35 @@
 <div x-data="{ showNewProject: false }">
     <h1>Your Projects</h1>
 
-    <button @click="showNewProject = true">New Project</button>
+    <button class="btn-primary" @click="showNewProject = true">New Project</button>
 
-    <div x-show="showNewProject" x-cloak>
-        <form hx-post="/api/projects" hx-swap="afterbegin" hx-target="#projects-list">
-            <input type="text" name="name" placeholder="Project name" required>
-            <button type="submit">Create</button>
-            <button type="button" @click="showNewProject = false">Cancel</button>
-        </form>
+    <div class="modal" x-show="showNewProject" x-cloak>
+        <div class="modal-content">
+            <h2>Create New Project</h2>
+            <form
+                hx-post="/api/projects"
+                hx-target="#projects-list"
+                hx-swap="afterbegin"
+                @htmx:after-request="showNewProject = false"
+            >
+                <div class="form-group">
+                    <label for="name">Project name</label>
+                    <input type="text" id="name" name="name" placeholder="My Video Project" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Create</button>
+                    <button type="button" class="btn-secondary" @click="showNewProject = false">Cancel</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div id="projects-list">
-        <!-- Projects will be loaded here -->
+    <div id="projects-list" class="projects-grid">
+        {% for project in projects %}
+        {% include "partials/project_card.html" %}
+        {% else %}
+        <p class="empty-state">No projects yet. Create one to get started!</p>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}
