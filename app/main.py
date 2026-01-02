@@ -20,6 +20,9 @@ app = FastAPI(title="Long Form Video Generator", lifespan=lifespan)
 # Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+# Mount uploads folder for serving generated videos
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
+
 # Include routers
 app.include_router(pages.router)
 app.include_router(api.router, prefix="/api")
